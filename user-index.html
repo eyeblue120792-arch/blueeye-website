@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Anggota - BlueEye's Entitas Pribadi</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background: radial-gradient(circle at 50% 30%, #064e3b 0%, #022c22 50%, #021f17 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .dot-matrix {
+            background-image: radial-gradient(rgba(52, 211, 153, 0.2) 1.5px, transparent 1.5px);
+            background-size: 28px 28px;
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+<body class="flex flex-col h-full text-slate-800 relative selection:bg-emerald-500 selection:text-white">
+
+    <div class="dot-matrix"></div>
+
+    <header class="relative z-20 w-full px-6 py-4 flex justify-between items-center max-w-7xl mx-auto">
+        <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 text-white shadow-lg">
+                <i class="fa-solid fa-users text-2xl text-emerald-400"></i>
+            </div>
+            <div>
+                <h1 class="text-white font-extrabold text-lg leading-none tracking-wide flex items-center gap-2">
+                    BlueEye's <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300 font-semibold border border-emerald-400/30">PORTAL ANGGOTA</span>
+                </h1>
+                <p class="text-emerald-200/70 text-xs font-medium tracking-wider mt-1">Akses Layanan Entitas Anggota</p>
+            </div>
+        </div>
+
+        <a href="index.html" class="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition flex items-center gap-2">
+            <i class="fa-solid fa-user-shield"></i>
+            <span>Portal Admin</span>
+        </a>
+    </header>
+
+    <main class="flex-1 relative z-10 flex flex-col items-center justify-center p-4">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 sm:p-8 relative shadow-2xl border border-white">
+            
+            <div class="flex items-center gap-3.5 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white flex items-center justify-center text-xl shadow-lg shadow-emerald-500/30">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-extrabold text-slate-900">Login Anggota</h3>
+                    <p class="text-xs text-slate-500">Masuk menggunakan Username & Password Anggota</p>
+                </div>
+            </div>
+
+            <form onsubmit="handleUserLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Username Anggota</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="userLoginUsername" required placeholder="Contoh: elyana1001" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-500 bg-white/80 font-bold text-slate-800">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Kata Sandi</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="password" id="userLoginPassword" required placeholder="••••••••" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-500 bg-white/80">
+                    </div>
+                </div>
+
+                <div id="userLoginError" class="hidden p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 text-xs font-bold text-center flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation text-red-500 text-sm"></i>
+                    <span>Username atau Password Anggota Salah!</span>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-700 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 hover:opacity-95 transition mt-2 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-sign-in-alt"></i>
+                    <span>Masuk ke Dashboard Anggota</span>
+                </button>
+            </form>
+
+            <div class="mt-6 pt-4 border-t border-slate-200/60 text-center">
+                <p class="text-[11px] text-slate-500">Gunakan akun anggota yang didaftarkan oleh Admin.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Kredensial Default jika belum pernah diset Admin
+        const defaultMembers = [
+            { id: 'BE-1001', name: 'Dra. Elyana Amanda', username: 'elyana1001', password: 'pass1001', role: 'Pengawas Utama Entitas', status: 'Aktif' },
+            { id: 'BE-1002', name: 'Rian Hidayat, S.Kom', username: 'rian1002', password: 'pass1002', role: 'Administrator Sistem', status: 'Aktif' },
+            { id: 'BE-1003', name: 'Siti Nurhaliza, M.M', username: 'siti1003', password: 'pass1003', role: 'Analis Kebijakan', status: 'Ditinjau' },
+            { id: 'BE-1004', name: 'Budi Santoso', username: 'budi1004', password: 'pass1004', role: 'Anggota Kehormatan', status: 'Aktif' }
+        ];
+
+        if (!localStorage.getItem('blueeyeMembers')) {
+            localStorage.setItem('blueeyeMembers', JSON.stringify(defaultMembers));
+        }
+
+        function handleUserLogin(e) {
+            e.preventDefault();
+
+            const usernameInput = document.getElementById('userLoginUsername').value.trim();
+            const passwordInput = document.getElementById('userLoginPassword').value.trim();
+            const errorEl = document.getElementById('userLoginError');
+
+            const members = JSON.parse(localStorage.getItem('blueeyeMembers') || '[]');
+
+            // Mencari user yang cocok berdasarkan Username & Password
+            const foundUser = members.find(m => m.username === usernameInput && m.password === passwordInput);
+
+            if (foundUser) {
+                if (foundUser.status === 'Nonaktif') {
+                    alert('Akun Anda saat ini dinonaktifkan oleh Admin.');
+                    return;
+                }
+
+                errorEl.classList.add('hidden');
+                
+                // Simpan user yang sedang aktif ke sesi LocalStorage
+                localStorage.setItem('activeUserMember', JSON.stringify(foundUser));
+                
+                // Pindah ke dashboard user
+                window.location.href = 'user-dashboard.html';
+            } else {
+                errorEl.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

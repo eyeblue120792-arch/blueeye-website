@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Anggota - BlueEye's Entitas Pribadi</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background: radial-gradient(circle at 50% 30%, #064e3b 0%, #022c22 50%, #021f17 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .dot-matrix {
+            background-image: radial-gradient(rgba(52, 211, 153, 0.2) 1.5px, transparent 1.5px);
+            background-size: 28px 28px;
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.5);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body onclick="enableAudioOnUserInteraction()" class="h-full text-slate-800 flex flex-col md:flex-row relative selection:bg-emerald-500 selection:text-white overflow-x-hidden">
+
+    <div class="dot-matrix"></div>
+
+    <!-- POPUP TOAST NOTIFIKASI MELAYANG -->
+    <div id="toastNotification" class="fixed top-5 right-5 z-50 transform translate-x-full transition-all duration-300 ease-out hidden">
+        <div class="bg-slate-900/95 border-2 border-emerald-400 text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-4 backdrop-blur-xl max-w-md">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center font-bold text-xl shrink-0 animate-bounce shadow-lg shadow-emerald-500/40">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+            <div class="overflow-hidden flex-1">
+                <div class="flex items-center justify-between">
+                    <h5 class="text-xs font-black text-emerald-400 uppercase tracking-wider" id="toastSender">Pesan Baru!</h5>
+                    <span class="text-[9px] text-slate-400 font-mono">Baru saja</span>
+                </div>
+                <p class="text-xs font-bold text-slate-100 truncate mt-0.5" id="toastText">Isi pesan singkat...</p>
+            </div>
+            <button onclick="closeToast()" class="text-slate-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-base"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Sidebar Navigation User -->
+    <aside class="w-full md:w-72 bg-slate-900/80 backdrop-blur-xl text-slate-200 border-r border-white/10 flex-shrink-0 flex flex-col relative z-20">
+        <div class="h-20 flex items-center gap-3 px-6 border-b border-white/10">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30">
+                <i class="fa-solid fa-user-circle text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-white text-base leading-tight">BlueEye's</h1>
+                <p class="text-xs text-emerald-300/80 font-medium">Panel Anggota Entitas</p>
+            </div>
+        </div>
+
+        <div class="p-4 flex-1 space-y-2 overflow-y-auto">
+            <div class="px-3 pb-2 text-[10px] font-extrabold text-emerald-400 uppercase tracking-widest">
+                Menu Utama
+            </div>
+
+            <a href="#" onclick="switchTab('tab-user-overview', this)" class="nav-item active flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all bg-gradient-to-r from-emerald-500 to-teal-700 text-white shadow-lg shadow-emerald-500/20">
+                <i class="fa-solid fa-address-card text-sm"></i>
+                <span>Profil Anggota</span>
+            </a>
+
+            <!-- MENU CHAT DENGAN NOTIFIKASI BADGE TOTAL -->
+            <a href="#" onclick="switchTab('tab-user-chat', this)" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all text-slate-300 hover:bg-white/10 hover:text-white relative">
+                <i class="fa-solid fa-comments text-sm"></i>
+                <span>Pesan Entitas</span>
+                <span id="userUnreadBadge" class="ml-auto px-2.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-black hidden animate-pulse shadow-lg shadow-red-500/50">0</span>
+            </a>
+        </div>
+
+        <!-- Logged User Footer & Exit -->
+        <div class="p-4 border-t border-white/10 bg-slate-950/40">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 font-bold">
+                        <i class="fa-solid fa-id-badge"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-white leading-tight truncate max-w-[120px]" id="userSidebarName">Anggota</p>
+                        <p class="text-[10px] text-emerald-400 font-semibold font-mono" id="userSidebarId">BE-XXXX</p>
+                    </div>
+                </div>
+
+                <a href="user-index.html" class="w-9 h-9 rounded-xl bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 text-red-300 flex items-center justify-center transition" title="Keluar / Logout">
+                    <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 min-h-screen relative z-10">
+        
+        <header class="h-20 px-6 flex items-center justify-between border-b border-white/10 bg-slate-900/40 backdrop-blur-md">
+            <h2 class="text-white font-extrabold text-lg flex items-center gap-2">
+                Panel Anggota <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">INSTANT REAL-TIME CONNECTED</span>
+            </h2>
+
+            <div class="flex items-center gap-3">
+                <button id="btnSoundInit" onclick="initAudioManual()" class="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-400/30 text-xs font-bold flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-volume-high"></i>
+                    <span>Tes Suara Notif</span>
+                </button>
+                <div id="userClock" class="px-3.5 py-1.5 rounded-xl bg-white/10 text-emerald-200 text-xs font-mono border border-white/15">
+                    00:00:00 WIB
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
+
+            <!-- TAB 1: PROFIL ANGGOTA -->
+            <div id="tab-user-overview" class="space-y-6">
+                <div class="glass-card rounded-3xl p-6 border border-white">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wider">Status Keanggotaan Aktif</span>
+                            <h2 class="text-2xl font-extrabold text-slate-900 mt-2" id="userProfileName">Nama Anggota</h2>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed" id="userProfileRole">Peran Entitas</p>
+                        </div>
+                        <div class="px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-700 font-bold text-xs font-mono" id="userProfileId">
+                            ID: BE-1001
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="glass-card p-5 rounded-2xl border border-white flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Username Sesi</p>
+                            <h3 class="text-lg font-extrabold text-emerald-700 mt-1" id="userProfileUsername">username</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-5 rounded-2xl border border-white flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pesan Belum Dibaca</p>
+                            <h3 class="text-lg font-extrabold text-red-500 mt-1" id="userUnreadStat">0 Pesan</h3>
+                            <p class="text-[11px] text-slate-500 font-medium mt-0.5">Real-Time Sync Active</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-red-100 text-red-500 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: CHAT MULTI-USER DENGAN NOTIFIKASI -->
+            <div id="tab-user-chat" class="hidden space-y-6">
+                <div class="glass-card rounded-3xl border border-white overflow-hidden flex flex-col md:flex-row h-[600px] bg-white">
+                    
+                    <!-- Sidebar Kontak -->
+                    <div class="w-full md:w-80 border-r border-slate-200 bg-slate-50/50 flex flex-col">
+                        <div class="p-4 border-b border-slate-200">
+                            <h3 class="font-bold text-slate-900 text-sm">Daftar Kontak Entitas</h3>
+                            <p class="text-[11px] text-slate-500">Pilih Admin atau rekan anggota</p>
+                        </div>
+                        <div id="userContactList" class="flex-1 overflow-y-auto divide-y divide-slate-100">
+                            <!-- Kontak di-render secara dinamis -->
+                        </div>
+                    </div>
+
+                    <!-- Panel Obrolan Utama -->
+                    <div class="flex-1 flex flex-col bg-white">
+                        <!-- Chat Header -->
+                        <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow">
+                                    <i class="fa-solid fa-user-group"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900 text-sm" id="activeChatTargetName">Pilih Kontak</h4>
+                                    <p class="text-[10px] text-emerald-600 font-semibold" id="activeChatTargetInfo">-</p>
+                                </div>
+                            </div>
+
+                            <button onclick="clearUserCurrentChat()" id="btnClearUserChat" class="hidden px-3 py-1.5 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-trash"></i>
+                                <span>Hapus Obrolan</span>
+                            </button>
+                        </div>
+
+                        <!-- Chat Messages Box -->
+                        <div id="userChatBox" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/30">
+                            <div class="text-center text-slate-400 text-xs my-auto pt-20">
+                                <i class="fa-solid fa-comments text-3xl mb-2 text-slate-300"></i>
+                                <p>Pilih penerima pesan dari daftar kontak untuk memulai percakapan.</p>
+                            </div>
+                        </div>
+
+                        <!-- Chat Input Box -->
+                        <div class="p-3 border-t border-slate-200 bg-white">
+                            <input type="file" id="userFileInput" class="hidden" accept="image/*,.pdf,.doc,.docx,.txt" onchange="handleUserFileSelect(event)">
+
+                            <form onsubmit="sendUserChatMessage(event)" class="flex items-center gap-2">
+                                <button type="button" onclick="document.getElementById('userFileInput').click()" class="p-2.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition" title="Lampirkan Gambar/Dokumen">
+                                    <i class="fa-solid fa-paperclip text-base"></i>
+                                </button>
+
+                                <input type="text" id="userTextInput" placeholder="Tulis pesan..." class="flex-1 px-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500 bg-slate-50">
+
+                                <button type="submit" class="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-700 text-white text-xs font-bold rounded-xl shadow hover:opacity-95 transition flex items-center gap-1.5">
+                                    <span>Kirim</span>
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let selectedTarget = null;
+        let audioContext = null;
+
+        function enableAudioOnUserInteraction() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+
+        function initAudioManual() {
+            enableAudioOnUserInteraction();
+            playNotifSound();
+            showToastNotification('Sistem', 'Notifikasi Suara Berhasil Aktif!');
+        }
+
+        function playNotifSound() {
+            try {
+                enableAudioOnUserInteraction();
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioContext.currentTime);
+                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.3);
+            } catch(e){}
+        }
+
+        function showToastNotification(senderName, text) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastSender').innerText = 'Pesan Baru: ' + senderName;
+            document.getElementById('toastText').innerText = text;
+
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.remove('translate-x-full'), 50);
+            setTimeout(() => closeToast(), 4000);
+        }
+
+        function closeToast() {
+            const toast = document.getElementById('toastNotification');
+            toast.classList.add('translate-x-full');
+            setTimeout(() => toast.classList.add('hidden'), 300);
+        }
+
+        function loadActiveUser() {
+            const data = localStorage.getItem('activeUserMember');
+            if (!data) {
+                window.location.href = 'user-index.html';
+                return;
+            }
+
+            currentUser = JSON.parse(data);
+
+            document.getElementById('userSidebarName').innerText = currentUser.name;
+            document.getElementById('userSidebarId').innerText = currentUser.id;
+
+            document.getElementById('userProfileName').innerText = currentUser.name;
+            document.getElementById('userProfileRole').innerText = currentUser.role;
+            document.getElementById('userProfileId').innerText = 'ID: ' + currentUser.id;
+            document.getElementById('userProfileUsername').innerText = currentUser.username;
+
+            renderContactList();
+            checkUnreadNotifications();
+        }
+
+        function generateChatKey(id1, id2) {
+            const sortedIds = [id1, id2].sort();
+            return `chat_${sortedIds[0]}_${sortedIds[1]}`;
+        }
+
+        function renderContactList() {
+            const container = document.getElementById('userContactList');
+            if (!container || !currentUser) return;
+
+            const contacts = [];
+
+            // 1. Admin
+            const adminKey = generateChatKey(currentUser.id, 'admin');
+            const adminMsgs = JSON.parse(localStorage.getItem(adminKey) || '[]');
+            const adminUnread = adminMsgs.filter(m => m.sender !== currentUser.id && !m.read).length;
+            contacts.push({ id: 'admin', name: 'Administrator Portal Utama', role: 'Pengawas Utama', unread: adminUnread, isAdmin: true });
+
+            // 2. Anggota Lainnya
+            const allMembers = JSON.parse(localStorage.getItem('blueeyeMembers') || '[]');
+            allMembers.forEach(m => {
+                if (m.id !== currentUser.id) {
+                    const userKey = generateChatKey(currentUser.id, m.id);
+                    const msgs = JSON.parse(localStorage.getItem(userKey) || '[]');
+                    const unread = msgs.filter(msg => msg.sender !== currentUser.id && !msg.read).length;
+                    contacts.push({ id: m.id, name: m.name, role: 'ID: ' + m.id, unread: unread, isAdmin: false });
+                }
+            });
+
+            container.innerHTML = '';
+            contacts.forEach(c => {
+                const isSelected = selectedTarget && selectedTarget.id === c.id;
+                const item = document.createElement('div');
+                item.className = `p-3.5 flex items-center justify-between cursor-pointer transition ${isSelected ? 'bg-emerald-100/80 border-l-4 border-emerald-600 font-bold' : 'hover:bg-slate-100'}`;
+                item.onclick = () => selectTarget(c);
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-3 truncate">
+                        <div class="w-9 h-9 rounded-xl ${c.isAdmin ? 'bg-cyan-600' : 'bg-emerald-600'} text-white flex items-center justify-center font-bold text-xs shrink-0">
+                            ${c.isAdmin ? '<i class="fa-solid fa-user-shield"></i>' : c.name.charAt(0)}
+                        </div>
+                        <div class="truncate">
+                            <p class="font-bold text-slate-900 text-xs truncate">${c.name}</p>
+                            <p class="text-[10px] text-slate-500 font-mono">${c.role}</p>
+                        </div>
+                    </div>
+                    ${c.unread > 0 ? `<span class="px-2 py-0.5 rounded-full bg-red-500 text-white font-black text-[10px] animate-pulse shadow">${c.unread}</span>` : ''}
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function selectTarget(target) {
+            selectedTarget = target;
+            document.getElementById('activeChatTargetName').innerText = target.name;
+            document.getElementById('activeChatTargetInfo').innerText = target.role;
+            document.getElementById('btnClearUserChat').classList.remove('hidden');
+
+            markMessagesAsRead();
+            loadChatMessages();
+            renderContactList();
+        }
+
+        function checkUnreadNotifications() {
+            if (!currentUser) return;
+            let currentTotalUnread = 0;
+
+            const adminKey = generateChatKey(currentUser.id, 'admin');
+            const adminMsgs = JSON.parse(localStorage.getItem(adminKey) || '[]');
+            currentTotalUnread += adminMsgs.filter(m => m.sender !== currentUser.id && !m.read).length;
+
+            const allMembers = JSON.parse(localStorage.getItem('blueeyeMembers') || '[]');
+            allMembers.forEach(m => {
+                if (m.id !== currentUser.id) {
+                    const userKey = generateChatKey(currentUser.id, m.id);
+                    const msgs = JSON.parse(localStorage.getItem(userKey) || '[]');
+                    currentTotalUnread += msgs.filter(msg => msg.sender !== currentUser.id && !msg.read).length;
+                }
+            });
+
+            const badge = document.getElementById('userUnreadBadge');
+            const stat = document.getElementById('userUnreadStat');
+
+            if (currentTotalUnread > 0) {
+                badge.innerText = currentTotalUnread;
+                badge.classList.remove('hidden');
+                if (stat) stat.innerText = currentTotalUnread + ' Pesan';
+            } else {
+                badge.classList.add('hidden');
+                if (stat) stat.innerText = '0 Pesan';
+            }
+        }
+
+        function markMessagesAsRead() {
+            if (!selectedTarget || !currentUser) return;
+            const chatKey = generateChatKey(currentUser.id, selectedTarget.id);
+            let messages = JSON.parse(localStorage.getItem(chatKey) || '[]');
+
+            let changed = false;
+            messages = messages.map(m => {
+                if (m.sender !== currentUser.id && !m.read) {
+                    changed = true;
+                    return { ...m, read: true };
+                }
+                return m;
+            });
+
+            if (changed) {
+                localStorage.setItem(chatKey, JSON.stringify(messages));
+                checkUnreadNotifications();
+            }
+        }
+
+        function loadChatMessages() {
+            const box = document.getElementById('userChatBox');
+            if (!box) return;
+
+            if (!selectedTarget) {
+                box.innerHTML = `<div class="text-center text-slate-400 text-xs my-auto pt-20"><p>Pilih penerima pesan dari daftar kontak untuk memulai percakapan.</p></div>`;
+                return;
+            }
+
+            const chatKey = generateChatKey(currentUser.id, selectedTarget.id);
+            const messages = JSON.parse(localStorage.getItem(chatKey) || '[]');
+
+            box.innerHTML = '';
+            if (messages.length === 0) {
+                box.innerHTML = `<p class="text-center text-slate-400 text-xs my-auto pt-20">Belum ada percakapan dengan ${selectedTarget.name}. Tulis pesan di bawah untuk memulai obrolan.</p>`;
+                return;
+            }
+
+            messages.forEach((msg, idx) => {
+                const isMine = (msg.sender === currentUser.id);
+                const msgDiv = document.createElement('div');
+                msgDiv.className = isMine ? 'flex justify-end group' : 'flex justify-start group';
+
+                let contentHtml = '';
+                if (msg.type === 'text') {
+                    contentHtml = `<p class="text-xs">${msg.content}</p>`;
+                } else if (msg.type === 'image') {
+                    contentHtml = `<img src="${msg.content}" class="max-w-[220px] rounded-lg shadow-sm border border-slate-200 mb-1"><p class="text-[10px] opacity-80">${msg.fileName}</p>`;
+                } else if (msg.type === 'file') {
+                    contentHtml = `
+                        <a href="${msg.content}" download="${msg.fileName}" class="flex items-center gap-2 p-2 bg-slate-100 rounded-lg text-emerald-700 hover:underline">
+                            <i class="fa-solid fa-file-pdf text-lg"></i>
+                            <span class="text-xs font-bold truncate max-w-[150px]">${msg.fileName}</span>
+                        </a>`;
+                }
+
+                msgDiv.innerHTML = `
+                    <div class="relative flex items-center gap-2 max-w-[75%]">
+                        <div class="${isMine ? 'bg-gradient-to-r from-emerald-500 to-teal-700 text-white' : 'bg-white border border-slate-200 text-slate-800'} p-3 rounded-2xl w-full shadow-sm">
+                            ${contentHtml}
+                            <span class="block text-[9px] opacity-70 text-right mt-1">${msg.time}</span>
+                        </div>
+                        <button onclick="deleteUserSingleMsg(${idx})" class="opacity-0 group-hover:opacity-100 p-1 text-red-400 hover:text-red-600 transition" title="Hapus">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                box.appendChild(msgDiv);
+            });
+
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function sendUserChatMessage(e) {
+            e.preventDefault();
+            if (!selectedTarget) return alert('Pilih kontak terlebih dahulu dari daftar sebelah kiri.');
+
+            const input = document.getElementById('userTextInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            saveAndTriggerMessage({
+                sender: currentUser.id,
+                type: 'text',
+                content: text,
+                read: false,
+                time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+            });
+
+            input.value = '';
+        }
+
+        function handleUserFileSelect(e) {
+            if (!selectedTarget) return alert('Pilih kontak terlebih dahulu.');
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                saveAndTriggerMessage({
+                    sender: currentUser.id,
+                    type: file.type.startsWith('image/') ? 'image' : 'file',
+                    content: evt.target.result,
+                    fileName: file.name,
+                    read: false,
+                    time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveAndTriggerMessage(newMsg) {
+            const chatKey = generateChatKey(currentUser.id, selectedTarget.id);
+            const messages = JSON.parse(localStorage.getItem(chatKey) || '[]');
+            messages.push(newMsg);
+
+            localStorage.setItem(chatKey, JSON.stringify(messages));
+            // Sinyal Sederhana untuk Memicu Pemicu Real-Time di Browser Lain
+            localStorage.setItem('blueeye_signal', Date.now().toString());
+
+            loadChatMessages();
+            renderContactList();
+        }
+
+        function deleteUserSingleMsg(idx) {
+            if (!selectedTarget) return;
+            const chatKey = generateChatKey(currentUser.id, selectedTarget.id);
+            let messages = JSON.parse(localStorage.getItem(chatKey) || '[]');
+            messages.splice(idx, 1);
+            localStorage.setItem(chatKey, JSON.stringify(messages));
+            loadChatMessages();
+            renderContactList();
+        }
+
+        function clearUserCurrentChat() {
+            if (!selectedTarget) return;
+            if (confirm('Hapus seluruh obrolan dengan ' + selectedTarget.name + '?')) {
+                localStorage.removeItem(generateChatKey(currentUser.id, selectedTarget.id));
+                loadChatMessages();
+                renderContactList();
+                checkUnreadNotifications();
+            }
+        }
+
+        function switchTab(tabId, el) {
+            document.getElementById('tab-user-overview').classList.add('hidden');
+            document.getElementById('tab-user-chat').classList.add('hidden');
+            document.getElementById(tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('bg-gradient-to-r', 'from-emerald-500', 'to-teal-700', 'text-white', 'shadow-lg');
+                item.classList.add('text-slate-300');
+            });
+
+            el.classList.add('bg-gradient-to-r', 'from-emerald-500', 'to-teal-700', 'text-white', 'shadow-lg');
+            el.classList.remove('text-slate-300');
+        }
+
+        function updateClock() {
+            document.getElementById('userClock').innerText = new Date().toLocaleTimeString('id-ID') + ' WIB';
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // PEMANTAU SINYAL REAL-TIME
+        window.addEventListener('storage', (e) => {
+            if (!currentUser) return;
+
+            // Jika ada sinyal pesan baru masuk
+            if (e.key.startsWith('chat_') || e.key === 'blueeye_signal') {
+                
+                // Cari apakah ada pesan unread baru yang masuk ke user ini
+                const allMembers = JSON.parse(localStorage.getItem('blueeyeMembers') || '[]');
+                let incomingSender = '';
+                let incomingContent = '';
+
+                // Cek dari Admin
+                const adminKey = generateChatKey(currentUser.id, 'admin');
+                const adminMsgs = JSON.parse(localStorage.getItem(adminKey) || '[]');
+                const unreadAdmin = adminMsgs.filter(m => m.sender !== currentUser.id && !m.read);
+                if (unreadAdmin.length > 0) {
+                    incomingSender = 'Administrator';
+                    incomingContent = unreadAdmin[unreadAdmin.length - 1].content || 'Mengirim berkas/gambar';
+                }
+
+                // Cek dari User Lain
+                allMembers.forEach(m => {
+                    if (m.id !== currentUser.id) {
+                        const userKey = generateChatKey(currentUser.id, m.id);
+                        const msgs = JSON.parse(localStorage.getItem(userKey) || '[]');
+                        const unread = msgs.filter(msg => msg.sender !== currentUser.id && !msg.read);
+                        if (unread.length > 0) {
+                            incomingSender = m.name;
+                            incomingContent = unread[unread.length - 1].content || 'Mengirim berkas/gambar';
+                        }
+                    }
+                });
+
+                if (incomingSender) {
+                    playNotifSound();
+                    showToastNotification(incomingSender, incomingContent);
+                }
+
+                if (selectedTarget) {
+                    markMessagesAsRead();
+                    loadChatMessages();
+                }
+                renderContactList();
+                checkUnreadNotifications();
+            }
+        });
+
+        // Polling Cepat Setiap 1 Detik untuk Menjamin Kecepatan Sync
+        setInterval(() => {
+            checkUnreadNotifications();
+            renderContactList();
+            if (selectedTarget) {
+                loadChatMessages();
+            }
+        }, 1000);
+
+        loadActiveUser();
+    </script>
+</body>
+</html>
